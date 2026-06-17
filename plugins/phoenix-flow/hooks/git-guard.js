@@ -12,6 +12,7 @@
 //       · 보호브랜치로 가는 push / ref 변경(branch -f, update-ref, push :main, checkout -B 등) 차단
 //       · 같은 명령에서 보호브랜치로 switch/checkout 후 write → 차단(체이닝)
 //       · gh pr merge / gh api ...pulls/.../merge / graphql mergePullRequest 차단
+//         (예외: 메인 세션이 PHOENIX_FLOW_ALLOW_MERGE=1 을 직접 붙이면 PR 머지만 허용 — 명시 승인 옵트인)
 //       · --no-verify, -c core.hooksPath=… (hook 우회) 차단
 //       · 'git merge main' (보호브랜치를 현재 feature 로 동기화)은 허용 — 목적지로 판별
 //   - 해석 불가 + git/gh write 의심 → deny(fail-closed)
@@ -47,6 +48,10 @@ process.stdin.on('end', () => {
   if (!/\b(git|gh)\b/.test(cmd)) return allow();
 
   const isSubagent = !!(ev.agent_id || ev.agent_type);
+  // 명시 승인 옵트인: 메인 세션이 PHOENIX_FLOW_ALLOW_MERGE=1 을 직접 붙였을 때만 gh pr merge 허용.
+  //   사람이 의도적으로 타이핑해야 붙는 토큰 — 실수로는 안 생긴다. subagent 는 절대 예외 없음.
+  //   범위는 'PR 머지'에 한정: 보호브랜치 push·이력 변조 차단은 그대로 유지한다.
+  const mergeOptIn = !isSubagent && /(^|[\s;&|(])PHOENIX_FLOW_ALLOW_MERGE=1(\s|$)/.test(cmd);
   const baseCwd = ev.cwd || process.cwd();
   const segments = cmd.split(/\n|&&|\|\||;|\|/);
 
@@ -62,7 +67,7 @@ process.stdin.on('end', () => {
   // 2) 세그먼트별 검사 (cd 추적하며 cwd 갱신)
   runningCwd = baseCwd;
   for (const seg of segments) {
-    const verdict = inspectSegment(seg, { isSubagent, cwd: runningCwd, movesToProtected });
+    const verdict = inspectSegment(seg, { isSubagent, cwd: runningCwd, movesToProtected, mergeOptIn });
     if (verdict) return deny(verdict);
     const nc = cdTarget(seg, runningCwd);
     if (nc) runningCwd = nc;
@@ -290,10 +295,13 @@ function inspectGh(args, ctx) {
     a.push(t);
   }
   const s = a.join(' ');
-  if (a[0] === 'pr' && a[1] === 'merge') return 'gh pr merge 금지 — PR 은 승인 후 사용자가 직접 머지하세요.';
-  if (a[0] === 'api') {
-    if (/pulls\/[^/\s]+\/merge/.test(s)) return 'gh api 로 PR merge 호출 금지 — 승인 후 사용자가 직접.';
-    if (/graphql/.test(s) && /mergePullRequest/.test(s)) return 'gh api graphql mergePullRequest 금지.';
+  // PR 머지 차단 — 단, 메인 세션이 명시 옵트인(PHOENIX_FLOW_ALLOW_MERGE=1)을 붙이면 통과.
+  if (!ctx.mergeOptIn) {
+    if (a[0] === 'pr' && a[1] === 'merge') return 'gh pr merge 금지 — 사용자가 직접, 또는 명시 승인 시 PHOENIX_FLOW_ALLOW_MERGE=1 을 붙이세요.';
+    if (a[0] === 'api') {
+      if (/pulls\/[^/\s]+\/merge/.test(s)) return 'gh api 로 PR merge 호출 금지 — 명시 승인 시 PHOENIX_FLOW_ALLOW_MERGE=1.';
+      if (/graphql/.test(s) && /mergePullRequest/.test(s)) return 'gh api graphql mergePullRequest 금지 — 명시 승인 시 PHOENIX_FLOW_ALLOW_MERGE=1.';
+    }
   }
   // subagent: gh write 전면 차단(read allowlist 외)
   if (ctx.isSubagent) {
