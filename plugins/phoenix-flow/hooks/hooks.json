@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/mysql-schema-helper.js"],
+            "timeout": 8
+          }
+        ]
+      }
+    ]
+  }
+}
