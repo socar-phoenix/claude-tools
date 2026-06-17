@@ -1,6 +1,6 @@
 {
   "name": "phoenix-flow",
-  "version": "0.3.0",
-  "description": "반복 작업 자동화 (mysql 스키마 교정·git 가드 등)",
+  "version": "0.4.0",
+  "description": "반복 작업 자동화 (mysql 스키마 교정·git 가드·AI 교차검토 등)",
   "author": { "name": "socar-phoenix" }
 }
