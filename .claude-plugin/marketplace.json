@@ -5,8 +5,8 @@
   "plugins": [
     {
       "name": "phoenix-flow",
-      "description": "반복 작업 자동화 (mysql 스키마 인지 교정 등)",
-      "version": "0.2.0",
+      "description": "반복 작업 자동화 (mysql 스키마 교정·git 가드 등)",
+      "version": "0.3.0",
       "author": { "name": "socar-phoenix" },
       "category": "development",
       "source": "./plugins/phoenix-flow"
