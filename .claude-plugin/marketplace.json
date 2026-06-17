@@ -1,0 +1,15 @@
+{
+  "name": "claude-tools",
+  "description": "socar-phoenix Claude Code 도구 모음",
+  "owner": { "name": "socar-phoenix" },
+  "plugins": [
+    {
+      "name": "phoenix-flow",
+      "description": "반복 작업 자동화 (API 테스트·재시도 교정·조회 헬퍼)",
+      "version": "0.1.0",
+      "author": { "name": "socar-phoenix" },
+      "category": "development",
+      "source": "./plugins/phoenix-flow"
+    }
+  ]
+}

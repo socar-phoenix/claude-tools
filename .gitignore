@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# 로그·임시
+*.log
+*.tmp
+
+# 의존성 (플러그인에 node 모듈이 생길 경우)
+node_modules/
+
+# 에디터
+.idea/
+.vscode/

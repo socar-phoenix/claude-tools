@@ -1,0 +1,6 @@
+{
+  "name": "phoenix-flow",
+  "version": "0.1.0",
+  "description": "반복 작업 자동화 (API 테스트·재시도 교정·조회 헬퍼)",
+  "author": { "name": "socar-phoenix" }
+}
